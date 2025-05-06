@@ -1,0 +1,23 @@
+
+#Script permettant de chercher les machines qui ne sont pas dans un groupe AD en fonction d'une chaine de caractère dans le nommage des machines.
+
+# Vérifie la disponibilité du module ActiveDirectory
+if (-not (Get-Module -ListAvailable -Name ActiveDirectory)) {
+    Write-Error "Le module ActiveDirectory n'est pas installé."
+    exit 1
+}
+Import-Module ActiveDirectory
+
+$GroupName="Test"
+
+$GroupMembers = Get-ADGroupMember -Identity $GroupName -Recursive | Where-Object { $_.objectClass -eq "computer" }
+
+#Ajout du filtre sur cette ligne
+$FilteredMembers = $GroupMembers | Where-Object { $_.Name -like "*Test*" }
+
+$Info_Members = $FilteredMembers | ForEach-Object {
+    Get-ADComputer -Identity $_.DistinguishedName -Properties Description, operatingSystem
+}
+
+$Info_Members | Select-Object Name, Description, DistinguishedName, operatingSystem
+Write-Host "Total : $($Info_Members.Count) machines" -ForegroundColor Red
